@@ -1,5 +1,4 @@
 def calculadora(operations: str):
-    operations = operations.replace(" ", "")
     soma = 0
 
     for strs in operations.split("+"):

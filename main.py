@@ -1,6 +1,7 @@
 import sys
 
-from calculadora import calculadora
+from classes.Parser import Parser
 
 if __name__ == "__main__":
-    print(calculadora(sys.argv[1:][0]))
+    parser = Parser()
+    print(parser.run(sys.argv[1:][0]))

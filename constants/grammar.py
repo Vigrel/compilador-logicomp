@@ -10,4 +10,4 @@ INT = [
     "9",
     "0",
 ]
-OPS = {"+": "PLUS", "-": "MINUS"}
+OPS = {"+": "PLUS", "-": "MINUS", "*": "MULT", "/": "DIV"}

@@ -31,12 +31,12 @@ class Parser:
 
     def parseExpression(self) -> int:
         result = self.parseTerm()
-
         while self.tokenizer.next.type in ["PLUS", "MINUS"]:
             if self.tokenizer.next.type == "PLUS":
                 self.tokenizer.selectNext()
                 if self.tokenizer.next.type == "INT":
                     result += self.parseTerm()
+                    continue
                 else:
                     raise KeyError
 
@@ -44,13 +44,14 @@ class Parser:
                 self.tokenizer.selectNext()
                 if self.tokenizer.next.type == "INT":
                     result -= self.parseTerm()
+                    continue
                 else:
                     raise KeyError
 
             self.tokenizer.selectNext()
 
-            if self.tokenizer.next.type == "EOF":
-                return result
+        if self.tokenizer.next.type == "EOF":
+            return result
 
         raise KeyError
 

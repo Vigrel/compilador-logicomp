@@ -10,6 +10,10 @@ class Tokenizer:
 
     def selectNext(self) -> Token:
         for letter in self.source[self.position :]:
+            if letter == " ":
+                self.position += 1
+                continue
+
             if letter in OPS.keys():
                 self.next = Token(OPS[letter], letter)
                 self.position += 1
@@ -26,9 +30,15 @@ class Tokenizer:
                 self.next = Token("INT", num)
                 return self.next
 
-            if letter == " ":
+            if letter == "(":
+                self.next = Token("PARENO", letter)
                 self.position += 1
-                continue
+                return self.next
+
+            if letter == ")":
+                self.next = Token("PARENC", letter)
+                self.position += 1
+                return self.next
 
             raise KeyError
 

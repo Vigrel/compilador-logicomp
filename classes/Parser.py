@@ -6,9 +6,6 @@ from classes.PrePro import PrePro
 class Parser:
     def parseTerm(self) -> int:
         result = self.parseFactor()
-        print(result)
-        print(self.tokenizer.next.type)
-        print(self.tokenizer.next.value)
         while self.tokenizer.next.type in ["MULT", "DIV"]:
             if self.tokenizer.next.type == "MULT":
                 self.tokenizer.selectNext()
@@ -27,16 +24,17 @@ class Parser:
     def parseFactor(self) -> int:
         act_tkn = self.tokenizer.next
         self.tokenizer.selectNext()
+        print(act_tkn.type)
+        print(act_tkn.value)
+        if act_tkn.type == "PARENO":
+            result = self.parseExpression()
+            if self.tokenizer.next.type != "PARENC":
+                raise KeyError
+            self.tokenizer.selectNext()
+            return result
 
         if act_tkn.type == "INT":
             return int(act_tkn.value)
-
-        if self.tokenizer.next.type == "INT":
-            result = self.tokenizer.next.value
-            self.tokenizer.selectNext()
-            if act_tkn.type == "MINUS":
-                return -int(result)
-            return int(result)
 
         if act_tkn.type == "MINUS":
             if self.tokenizer.next.type == "PLUS":
@@ -46,9 +44,17 @@ class Parser:
             if self.tokenizer.next.type == "MINUS":
                 self.tokenizer.next = Token("PLUS", "+")
                 return self.parseFactor()
-            return self.parseFactor()
+
+            if self.tokenizer.next.type == "INT":
+                result = self.tokenizer.next.value
+                self.tokenizer.selectNext()
+                return -int(result)
 
         if act_tkn.type == "PLUS":
+            if self.tokenizer.next.type == "INT":
+                result = self.tokenizer.next.value
+                self.tokenizer.selectNext()
+                return int(result)
             return self.parseFactor()
 
         raise KeyError
@@ -68,10 +74,10 @@ class Parser:
 
             self.tokenizer.selectNext()
 
-        if self.tokenizer.next.type == "EOF":
-            return result
+        if self.tokenizer.next.type == "INT":
+            raise KeyError
 
-        raise KeyError
+        return result
 
     def run(self, code: str) -> None:
         pre_pro: PrePro = PrePro()

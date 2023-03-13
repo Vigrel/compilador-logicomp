@@ -1,31 +1,55 @@
 from classes.Tokenizer import Tokenizer
+from classes.Token import Token
 from classes.PrePro import PrePro
 
 
 class Parser:
     def parseTerm(self) -> int:
-        if self.tokenizer.next.type == "INT":
-            result = int(self.tokenizer.next.value)
+        result = self.parseFactor()
+        print(result)
+        print(self.tokenizer.next.type)
+        print(self.tokenizer.next.value)
+        while self.tokenizer.next.type in ["MULT", "DIV"]:
+            if self.tokenizer.next.type == "MULT":
+                self.tokenizer.selectNext()
+                result *= self.parseFactor()
+                continue
+
+            if self.tokenizer.next.type == "DIV":
+                self.tokenizer.selectNext()
+                result //= self.parseFactor()
+                continue
+
             self.tokenizer.selectNext()
 
-            while self.tokenizer.next.type in ["MULT", "DIV"]:
-                if self.tokenizer.next.type == "MULT":
-                    self.tokenizer.selectNext()
-                    if self.tokenizer.next.type == "INT":
-                        result *= int(self.tokenizer.next.value)
-                    else:
-                        raise KeyError
+        return result
 
-                if self.tokenizer.next.type == "DIV":
-                    self.tokenizer.selectNext()
-                    if self.tokenizer.next.type == "INT":
-                        result //= int(self.tokenizer.next.value)
-                    else:
-                        raise KeyError
+    def parseFactor(self) -> int:
+        act_tkn = self.tokenizer.next
+        self.tokenizer.selectNext()
 
-                self.tokenizer.selectNext()
+        if act_tkn.type == "INT":
+            return int(act_tkn.value)
 
-            return result
+        if self.tokenizer.next.type == "INT":
+            result = self.tokenizer.next.value
+            self.tokenizer.selectNext()
+            if act_tkn.type == "MINUS":
+                return -int(result)
+            return int(result)
+
+        if act_tkn.type == "MINUS":
+            if self.tokenizer.next.type == "PLUS":
+                self.tokenizer.next = Token("MINUS", "-")
+                return self.parseFactor()
+
+            if self.tokenizer.next.type == "MINUS":
+                self.tokenizer.next = Token("PLUS", "+")
+                return self.parseFactor()
+            return self.parseFactor()
+
+        if act_tkn.type == "PLUS":
+            return self.parseFactor()
 
         raise KeyError
 
@@ -34,19 +58,13 @@ class Parser:
         while self.tokenizer.next.type in ["PLUS", "MINUS"]:
             if self.tokenizer.next.type == "PLUS":
                 self.tokenizer.selectNext()
-                if self.tokenizer.next.type == "INT":
-                    result += self.parseTerm()
-                    continue
-                else:
-                    raise KeyError
+                result += self.parseTerm()
+                continue
 
             if self.tokenizer.next.type == "MINUS":
                 self.tokenizer.selectNext()
-                if self.tokenizer.next.type == "INT":
-                    result -= self.parseTerm()
-                    continue
-                else:
-                    raise KeyError
+                result -= self.parseTerm()
+                continue
 
             self.tokenizer.selectNext()
 
@@ -59,5 +77,4 @@ class Parser:
         pre_pro: PrePro = PrePro()
         code = pre_pro.filter(code)
         self.tokenizer: Tokenizer = Tokenizer(code)
-
         return self.parseExpression()

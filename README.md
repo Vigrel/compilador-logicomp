@@ -6,8 +6,6 @@
 
 ### EBNF
 
-term:
-    number ('*'|'/') number
-
-expression:
-    term ('+'|'-') term
+EXPRESSION = TERM, { ("+" | "-"), TERM } ;
+TERM = FACTOR, { ("*" | "/"), FACTOR } ;
+FACTOR = ("+" | "-") FACTOR | "(" EXPRESSION ")" | number ;

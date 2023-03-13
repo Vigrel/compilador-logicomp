@@ -24,8 +24,6 @@ class Parser:
     def parseFactor(self) -> int:
         act_tkn = self.tokenizer.next
         self.tokenizer.selectNext()
-        print(act_tkn.type)
-        print(act_tkn.value)
         if act_tkn.type == "PARENO":
             result = self.parseExpression()
             if self.tokenizer.next.type != "PARENC":
@@ -83,4 +81,8 @@ class Parser:
         pre_pro: PrePro = PrePro()
         code = pre_pro.filter(code)
         self.tokenizer: Tokenizer = Tokenizer(code)
-        return self.parseExpression()
+        result = self.parseExpression()
+        if self.tokenizer.next.type != "EOF":
+            raise KeyError
+
+        return result

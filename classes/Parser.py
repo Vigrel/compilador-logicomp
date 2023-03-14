@@ -1,87 +1,66 @@
 from classes.Tokenizer import Tokenizer
-from classes.Token import Token
 from classes.PrePro import PrePro
+from classes.Node import Node, BinOp, UnOp, IntVal
 
 
 class Parser:
-    def parseTerm(self) -> int:
-        result = self.parseFactor()
-        while self.tokenizer.next.type in ["MULT", "DIV"]:
-            if self.tokenizer.next.type == "MULT":
-                self.tokenizer.selectNext()
-                result *= self.parseFactor()
-                continue
+    def parseExpression(self) -> Node:
+        fst_node = self.parseTerm()
 
-            if self.tokenizer.next.type == "DIV":
-                self.tokenizer.selectNext()
-                result //= self.parseFactor()
-                continue
-
-            self.tokenizer.selectNext()
-
-        return result
-
-    def parseFactor(self) -> int:
-        act_tkn = self.tokenizer.next
-        self.tokenizer.selectNext()
-        if act_tkn.type == "PARENO":
-            result = self.parseExpression()
-            if self.tokenizer.next.type != "PARENC":
-                raise KeyError
-            self.tokenizer.selectNext()
-            return result
-
-        if act_tkn.type == "INT":
-            return int(act_tkn.value)
-
-        if act_tkn.type == "MINUS":
-            if self.tokenizer.next.type == "PLUS":
-                self.tokenizer.next = Token("MINUS", "-")
-                return self.parseFactor()
-
-            if self.tokenizer.next.type == "MINUS":
-                self.tokenizer.next = Token("PLUS", "+")
-                return self.parseFactor()
-
-            if self.tokenizer.next.type == "INT":
-                result = self.tokenizer.next.value
-                self.tokenizer.selectNext()
-                return -int(result)
-
-        if act_tkn.type == "PLUS":
-            if self.tokenizer.next.type == "INT":
-                result = self.tokenizer.next.value
-                self.tokenizer.selectNext()
-                return int(result)
-            return self.parseFactor()
-
-        raise KeyError
-
-    def parseExpression(self) -> int:
-        result = self.parseTerm()
         while self.tokenizer.next.type in ["PLUS", "MINUS"]:
-            if self.tokenizer.next.type == "PLUS":
-                self.tokenizer.selectNext()
-                result += self.parseTerm()
-                continue
-
-            if self.tokenizer.next.type == "MINUS":
-                self.tokenizer.selectNext()
-                result -= self.parseTerm()
-                continue
-
+            op = self.tokenizer.next.value
             self.tokenizer.selectNext()
+            scd_node = BinOp(
+                op,
+                [fst_node, self.parseTerm()],
+            )
+            fst_node = scd_node
 
+        return fst_node
+
+    def parseTerm(self) -> Node:
+        fst_node = self.parseFactor()
+
+        while self.tokenizer.next.type in ["DIV", "MULT"]:
+            op = self.tokenizer.next.value
+            self.tokenizer.selectNext()
+            scd_node = BinOp(
+                op,
+                [fst_node, self.parseFactor()],
+            )
+            fst_node = scd_node
+
+        return fst_node
+
+    def parseFactor(self) -> Node:
         if self.tokenizer.next.type == "INT":
+            val = self.tokenizer.next.value
+            self.tokenizer.selectNext()
+            return IntVal(val)
+
+        if self.tokenizer.next.type in ["PLUS", "MINUS"]:
+            op = self.tokenizer.next.value
+            self.tokenizer.selectNext()
+            return UnOp(op, [self.parseFactor()])
+
+        if self.tokenizer.next.type == "PARENO":
+            self.tokenizer.selectNext()
+            node = self.parseExpression()
+            if self.tokenizer.next.type == "PARENC":
+                self.tokenizer.selectNext()
+                return node
             raise KeyError
 
-        return result
+    def run(self, file: str) -> int:
+        with open(file, "r") as f:
+            code = f.read()
 
-    def run(self, code: str) -> None:
-        pre_pro: PrePro = PrePro()
+        pre_pro = PrePro()
         code = pre_pro.filter(code)
-        self.tokenizer: Tokenizer = Tokenizer(code)
-        result = self.parseExpression()
+
+        self.tokenizer = Tokenizer(code)
+        result = self.parseExpression().evaluate()
+
         if self.tokenizer.next.type != "EOF":
             raise KeyError
 

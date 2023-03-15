@@ -1,6 +1,6 @@
-from classes.Tokenizer import Tokenizer
+from classes.Node import BinOp, IntVal, Node, UnOp
 from classes.PrePro import PrePro
-from classes.Node import Node, BinOp, UnOp, IntVal
+from classes.Tokenizer import Tokenizer
 
 
 class Parser:
@@ -63,10 +63,7 @@ class Parser:
                 return node
             raise SyntaxError("'(' was never closed")
 
-    def run(self, file: str) -> int:
-        with open(file, "r") as f:
-            code = f.read()
-
+    def run(self, code: str) -> int:
         pre_pro = PrePro()
         code = pre_pro.filter(code)
 

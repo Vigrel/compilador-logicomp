@@ -40,7 +40,7 @@ class Tokenizer:
                 self.position += 1
                 return self.next
 
-            raise KeyError
+            raise SyntaxError("invalid syntax")
 
         self.next = Token("EOF", "")
         return self.next

@@ -10,6 +10,10 @@ class Parser:
         while self.tokenizer.next.type in ["PLUS", "MINUS"]:
             op = self.tokenizer.next.value
             self.tokenizer.selectNext()
+
+            if self.tokenizer.next.type in ["DIV", "MULT"]:
+                raise SyntaxError(f"ivalid syntax - {op}{self.tokenizer.next.value}")
+
             scd_node = BinOp(
                 op,
                 [fst_node, self.parseTerm()],
@@ -24,6 +28,10 @@ class Parser:
         while self.tokenizer.next.type in ["DIV", "MULT"]:
             op = self.tokenizer.next.value
             self.tokenizer.selectNext()
+
+            if self.tokenizer.next.type in ["DIV", "MULT"]:
+                raise SyntaxError(f"ivalid syntax - {op}{self.tokenizer.next.value}")
+
             scd_node = BinOp(
                 op,
                 [fst_node, self.parseFactor()],
@@ -41,6 +49,10 @@ class Parser:
         if self.tokenizer.next.type in ["PLUS", "MINUS"]:
             op = self.tokenizer.next.value
             self.tokenizer.selectNext()
+
+            if self.tokenizer.next.type in ["DIV", "MULT"]:
+                raise SyntaxError(f"ivalid syntax - {op}{self.tokenizer.next.value}")
+
             return UnOp(op, [self.parseFactor()])
 
         if self.tokenizer.next.type == "PARENO":
@@ -49,7 +61,7 @@ class Parser:
             if self.tokenizer.next.type == "PARENC":
                 self.tokenizer.selectNext()
                 return node
-            raise KeyError
+            raise SyntaxError("'(' was never closed")
 
     def run(self, file: str) -> int:
         with open(file, "r") as f:
@@ -59,9 +71,9 @@ class Parser:
         code = pre_pro.filter(code)
 
         self.tokenizer = Tokenizer(code)
-        result = self.parseExpression().evaluate()
+        result = self.parseExpression()
 
         if self.tokenizer.next.type != "EOF":
-            raise KeyError
+            raise SyntaxError("unmatched ')'")
 
-        return result
+        return result.evaluate()

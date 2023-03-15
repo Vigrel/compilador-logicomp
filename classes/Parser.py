@@ -1,6 +1,5 @@
 from classes.Node import BinOp, IntVal, Node, UnOp
-from classes.PrePro import PrePro
-from classes.Tokenizer import Tokenizer
+from classes.PrePro import PrePro, Tokenizer
 
 
 class Parser:

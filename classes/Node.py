@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
+from classes.SymbolTable import SymbolTable
 
 
 class Node(ABC):
@@ -46,8 +47,41 @@ class IntVal(Node):
 
 
 class NoOp(Node):
+    def __init__(self) -> None:
+        super().__init__(0, [])
+
+    def evaluate(self) -> None:
+        return None
+
+
+class Print(Node):
     def __init__(self, value, children) -> None:
         super().__init__(value, children)
 
     def evaluate(self) -> None:
-        return None
+        return print(self.children[0].evaluate())
+
+
+class Identifier(Node):
+    def __init__(self, value) -> None:
+        super().__init__(value, [])
+
+    def evaluate(self) -> int:
+        return SymbolTable.getter(self.value)
+
+
+class Assignment(Node):
+    def __init__(self, value, children) -> None:
+        super().__init__(value, children)
+
+    def evaluate(self):
+        SymbolTable.setter(self.children[0].value, self.children[1].evaluate())
+
+
+class Block(Node):
+    def __init__(self, value, children) -> None:
+        super().__init__(value, children)
+
+    def evaluate(self) -> None:
+        for child in self.children:
+            child.evaluate()

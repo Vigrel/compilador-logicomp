@@ -1,6 +1,14 @@
 import re
 
-from constants.grammar import INT, OPS
+OPS = {
+    "+": "PLUS",
+    "-": "MINUS",
+    "*": "MULT",
+    "/": "DIV",
+    "(": "PARENO",
+    ")": "PARENC",
+    "=": "EQUALS",
+}
 
 
 class PrePro:
@@ -35,9 +43,9 @@ class Tokenizer:
                 self.position += 1
                 return self.next
 
-            if letter in INT:
+            if letter.isdigit():
                 num = ""
-                while letter in INT:
+                while letter.isdigit():
                     num += letter
                     self.position += 1
                     if self.position == len(self.source):
@@ -46,17 +54,26 @@ class Tokenizer:
                 self.next = Token("INT", num)
                 return self.next
 
-            if letter == "(":
-                self.next = Token("PARENO", letter)
-                self.position += 1
+            if letter.isalpha() or letter == "_":
+                num = ""
+                while letter.isdigit() or letter.isalpha() or "_":
+                    num += letter
+                    self.position += 1
+                    if self.position == len(self.source):
+                        break
+                    letter = self.source[self.position]
+                self.next = Token("IDENTIFIER", num)
                 return self.next
 
-            if letter == ")":
-                self.next = Token("PARENC", letter)
+            if letter == "\\":
                 self.position += 1
-                return self.next
+                if self.source[self.position] == "n":
+                    self.next = Token("LN", "\\n")
+                    self.position += 1
+                    return self.next
+                raise SyntaxError(f"invalid syntax - \\{self.source[self.position]}")
 
-            raise SyntaxError("invalid syntax")
+            raise SyntaxError(f"invalid syntax - {self.source[self.position]}")
 
         self.next = Token("EOF", "")
         return self.next

@@ -65,13 +65,10 @@ class Tokenizer:
                 self.next = Token("IDENTIFIER", idtf)
                 return self.next
 
-            if letter == "\\":
+            if letter == "\n":
                 self.position += 1
-                if self.source[self.position] == "n":
-                    self.next = Token("LN", "\\n")
-                    self.position += 1
-                    return self.next
-                raise SyntaxError(f"invalid syntax - \\{self.source[self.position]}")
+                self.next = Token("LN", "\n")
+                return self.next
 
             raise SyntaxError(f"invalid syntax - {self.source[self.position]}")
 

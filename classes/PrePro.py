@@ -55,14 +55,14 @@ class Tokenizer:
                 return self.next
 
             if letter.isalpha() or letter == "_":
-                num = ""
-                while letter.isdigit() or letter.isalpha() or "_":
-                    num += letter
+                idtf = ""
+                while letter.isdigit() or letter.isalpha() or letter == "_":
+                    idtf += letter
                     self.position += 1
                     if self.position == len(self.source):
                         break
                     letter = self.source[self.position]
-                self.next = Token("IDENTIFIER", num)
+                self.next = Token("IDENTIFIER", idtf)
                 return self.next
 
             if letter == "\\":

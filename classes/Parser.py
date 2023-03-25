@@ -1,105 +1,117 @@
 from classes.Node import *
-from classes.PrePro import PrePro, Tokenizer
+from classes.PrePro import Tokenizer
 
 
 class Parser:
-    def parseBlock(self) -> Node:
+    tknz = Tokenizer("")
+
+    @staticmethod
+    def parseBlock() -> Node:
         children = []
-        while self.tokenizer.next.type != "EOF":
-            children.append(self.parseStatement())
+        while Parser.tknz.next.type != "EOF":
+            children.append(Parser.parseStatement())
         return Block(children)
 
-    def parseStatement(self) -> Node:
+    @staticmethod
+    def parseStatement() -> Node:
         node = NoOp()
-        while self.tokenizer.next.type not in ["LN", "EOF"]:
-            if self.tokenizer.next.type == "IDENTIFIER":
-                idtf = self.tokenizer.next.value
+        while Parser.tknz.next.type not in ["LN", "EOF"]:
+            if Parser.tknz.next.type == "IDENTIFIER":
+                idtf = Parser.tknz.next.value
                 if idtf == "println":
-                    self.tokenizer.selectNext()
-                    if self.tokenizer.next.type != "PARENO":
+                    Parser.tknz.selectNext()
+                    if Parser.tknz.next.type != "PARENO":
                         raise SyntaxError("'(' needed")
-                    self.tokenizer.selectNext()
-                    node = Print("print", [self.parseExpression()])
-                    if self.tokenizer.next.type != "PARENC":
+                    Parser.tknz.selectNext()
+                    node = Print("print", [Parser.parseExpression()])
+                    if Parser.tknz.next.type != "PARENC":
                         raise SyntaxError("'(' was never closed")
-                    self.tokenizer.selectNext()
+                    Parser.tknz.selectNext()
                     continue
 
-                self.tokenizer.selectNext()
-                if self.tokenizer.next.type != "EQUALS":
+                Parser.tknz.selectNext()
+                if Parser.tknz.next.type != "EQUALS":
                     raise SyntaxError("'=' needed")
-                self.tokenizer.selectNext()
-                node = Assignment(idtf, [self.parseExpression()])
+                Parser.tknz.selectNext()
+                node = Assignment(idtf, [Parser.parseExpression()])
 
-        self.tokenizer.selectNext()
+        Parser.tknz.selectNext()
         return node
 
-    def parseExpression(self) -> Node:
-        fst_node = self.parseTerm()
+    @staticmethod
+    def parseExpression() -> Node:
+        fst_node = Parser.parseTerm()
 
-        while self.tokenizer.next.type in ["PLUS", "MINUS"]:
-            op = self.tokenizer.next.value
-            self.tokenizer.selectNext()
+        while Parser.tknz.next.type in ["PLUS", "MINUS"]:
+            op = Parser.tknz.next.value
+            Parser.tknz.selectNext()
 
-            if self.tokenizer.next.type in ["DIV", "MULT"]:
-                raise SyntaxError(f"ivalid syntax - {op}{self.tokenizer.next.value}")
+            if Parser.tknz.next.type in ["DIV", "MULT"]:
+                raise SyntaxError(f"ivalid syntax - {op}{Parser.tknz.next.value}")
 
             scd_node = BinOp(
                 op,
-                [fst_node, self.parseTerm()],
+                [fst_node, Parser.parseTerm()],
             )
             fst_node = scd_node
 
         return fst_node
 
-    def parseTerm(self) -> Node:
-        fst_node = self.parseFactor()
+    @staticmethod
+    def parseTerm() -> Node:
+        fst_node = Parser.parseFactor()
 
-        while self.tokenizer.next.type in ["DIV", "MULT"]:
-            op = self.tokenizer.next.value
-            self.tokenizer.selectNext()
+        while Parser.tknz.next.type in ["DIV", "MULT"]:
+            op = Parser.tknz.next.value
+            Parser.tknz.selectNext()
 
-            if self.tokenizer.next.type in ["DIV", "MULT"]:
-                raise SyntaxError(f"ivalid syntax - {op}{self.tokenizer.next.value}")
+            if Parser.tknz.next.type in ["DIV", "MULT"]:
+                raise SyntaxError(f"ivalid syntax - {op}{Parser.tknz.next.value}")
 
             scd_node = BinOp(
                 op,
-                [fst_node, self.parseFactor()],
+                [fst_node, Parser.parseFactor()],
             )
             fst_node = scd_node
 
         return fst_node
 
-    def parseFactor(self) -> Node:
-        if self.tokenizer.next.type == "INT":
-            val = self.tokenizer.next.value
-            self.tokenizer.selectNext()
+    @staticmethod
+    def parseFactor() -> Node:
+        if Parser.tknz.next.type == "INT":
+            val = Parser.tknz.next.value
+            Parser.tknz.selectNext()
             return IntVal(val)
 
-        if self.tokenizer.next.type == "IDENTIFIER":
-            val = self.tokenizer.next.value
-            self.tokenizer.selectNext()
+        if Parser.tknz.next.type == "IDENTIFIER":
+            val = Parser.tknz.next.value
+            Parser.tknz.selectNext()
             return Identifier(val)
 
-        if self.tokenizer.next.type in ["PLUS", "MINUS"]:
-            op = self.tokenizer.next.value
-            self.tokenizer.selectNext()
+        if Parser.tknz.next.type in ["PLUS", "MINUS"]:
+            op = Parser.tknz.next.value
+            Parser.tknz.selectNext()
 
-            if self.tokenizer.next.type in ["DIV", "MULT"]:
-                raise SyntaxError(f"ivalid syntax - {op}{self.tokenizer.next.value}")
+            if Parser.tknz.next.type in ["DIV", "MULT"]:
+                raise SyntaxError(f"ivalid syntax - {op}{Parser.tknz.next.value}")
 
-            return UnOp(op, [self.parseFactor()])
+            return UnOp(op, [Parser.parseFactor()])
 
-        if self.tokenizer.next.type == "PARENO":
-            self.tokenizer.selectNext()
-            node = self.parseExpression()
-            if self.tokenizer.next.type == "PARENC":
-                self.tokenizer.selectNext()
+        if Parser.tknz.next.type == "PARENO":
+            Parser.tknz.selectNext()
+            node = Parser.parseExpression()
+            if Parser.tknz.next.type == "PARENC":
+                Parser.tknz.selectNext()
                 return node
             raise SyntaxError("'(' was never closed")
 
-    def run(self, code: str) -> any:
-        pre_pro = PrePro()
-        code = pre_pro.filter(code)
-        self.tokenizer = Tokenizer(code)
-        return self.parseBlock().evaluate()
+    @staticmethod
+    def run(code: str) -> any:
+        Parser.tknz.__init__(code)
+
+        # while Parser.tknz.next.type != "EOF":
+        #     # print(Parser.tknz.next.type)
+        #     # print(Parser.tknz.next.value)
+        #     Parser.tknz.selectNext()
+
+        return Parser.parseBlock().evaluate()

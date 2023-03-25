@@ -25,7 +25,7 @@ class Token:
 
 class Tokenizer:
     def __init__(self, source: str) -> None:
-        self.source: str = source
+        self.source: str = PrePro.filter(source)
         self.position: int = 0
         self.next: Token = self.selectNext()
 

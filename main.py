@@ -7,4 +7,4 @@ if __name__ == "__main__":
         code = f.read()
 
     parser = Parser()
-    print(parser.run(code))
+    parser.run(code)

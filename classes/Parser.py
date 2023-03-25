@@ -34,13 +34,15 @@ class Parser:
                     raise SyntaxError("'=' needed")
                 Parser.tknz.selectNext()
                 node = Assignment(idtf, [Parser.parseExpression()])
+                continue
+            raise SyntaxError(f"ivalid syntax - {Parser.tknz.next.value}")
 
         Parser.tknz.selectNext()
         return node
 
     @staticmethod
     def parseExpression() -> Node:
-        fst_node = Parser.parseTerm()
+        node = Parser.parseTerm()
 
         while Parser.tknz.next.type in ["PLUS", "MINUS"]:
             op = Parser.tknz.next.value
@@ -49,17 +51,16 @@ class Parser:
             if Parser.tknz.next.type in ["DIV", "MULT"]:
                 raise SyntaxError(f"ivalid syntax - {op}{Parser.tknz.next.value}")
 
-            scd_node = BinOp(
+            node = BinOp(
                 op,
-                [fst_node, Parser.parseTerm()],
+                [node, Parser.parseTerm()],
             )
-            fst_node = scd_node
 
-        return fst_node
+        return node
 
     @staticmethod
     def parseTerm() -> Node:
-        fst_node = Parser.parseFactor()
+        node = Parser.parseFactor()
 
         while Parser.tknz.next.type in ["DIV", "MULT"]:
             op = Parser.tknz.next.value
@@ -68,37 +69,33 @@ class Parser:
             if Parser.tknz.next.type in ["DIV", "MULT"]:
                 raise SyntaxError(f"ivalid syntax - {op}{Parser.tknz.next.value}")
 
-            scd_node = BinOp(
+            node = BinOp(
                 op,
-                [fst_node, Parser.parseFactor()],
+                [node, Parser.parseFactor()],
             )
-            fst_node = scd_node
 
-        return fst_node
+        return node
 
     @staticmethod
     def parseFactor() -> Node:
-        if Parser.tknz.next.type == "INT":
-            val = Parser.tknz.next.value
-            Parser.tknz.selectNext()
-            return IntVal(val)
+        tkn = Parser.tknz.next
+        Parser.tknz.selectNext()
 
-        if Parser.tknz.next.type == "IDENTIFIER":
-            val = Parser.tknz.next.value
-            Parser.tknz.selectNext()
-            return Identifier(val)
+        if tkn.type == "INT":
+            return IntVal(tkn.value)
 
-        if Parser.tknz.next.type in ["PLUS", "MINUS"]:
-            op = Parser.tknz.next.value
-            Parser.tknz.selectNext()
+        if tkn.type == "IDENTIFIER":
+            return Identifier(tkn.value)
 
+        if tkn.type in ["PLUS", "MINUS"]:
             if Parser.tknz.next.type in ["DIV", "MULT"]:
-                raise SyntaxError(f"ivalid syntax - {op}{Parser.tknz.next.value}")
+                raise SyntaxError(
+                    f"ivalid syntax - {tkn.value}{Parser.tknz.next.value}"
+                )
 
-            return UnOp(op, [Parser.parseFactor()])
+            return UnOp(tkn.value, [Parser.parseFactor()])
 
-        if Parser.tknz.next.type == "PARENO":
-            Parser.tknz.selectNext()
+        if tkn.type == "PARENO":
             node = Parser.parseExpression()
             if Parser.tknz.next.type == "PARENC":
                 Parser.tknz.selectNext()
@@ -108,10 +105,5 @@ class Parser:
     @staticmethod
     def run(code: str) -> any:
         Parser.tknz.__init__(code)
-
-        # while Parser.tknz.next.type != "EOF":
-        #     # print(Parser.tknz.next.type)
-        #     # print(Parser.tknz.next.value)
-        #     Parser.tknz.selectNext()
 
         return Parser.parseBlock().evaluate()

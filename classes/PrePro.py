@@ -27,52 +27,47 @@ class Tokenizer:
     def __init__(self, source: str) -> None:
         self.source: str = PrePro.filter(source)
         self.position: int = 0
-        self.next: Token = self.selectNext()
+        self.next: Token = Token("", 0)
+        self.lenght = len(self.source)
 
-    def selectNext(self) -> Token:
-        for letter in self.source[self.position :]:
+        self.selectNext()
+
+    def selectNext(self):
+        while self.position < self.lenght:
+            letter = self.source[self.position]
+            self.position += 1
+
             if letter == " ":
-                self.position += 1
                 continue
 
-            if letter in OPS.keys():
+            elif letter in OPS:
                 self.next = Token(OPS[letter], letter)
-                self.position += 1
-                return self.next
 
-            if letter.isdigit():
-                num = ""
-                while letter.isdigit():
-                    num += letter
+            elif letter.isdecimal():
+                num = letter
+                while (
+                    self.position < self.lenght
+                    and self.source[self.position].isdecimal()
+                ):
+                    num += self.source[self.position]
                     self.position += 1
-                    if self.position == len(self.source):
-                        break
-                    letter = self.source[self.position]
-                    if letter.isalpha() or letter == "_":
-                        raise SyntaxError(
-                            f"invalid syntax - {num}{self.source[self.position]}"
-                        )
-
                 self.next = Token("INT", num)
-                return self.next
 
-            if letter.isalpha() or letter == "_":
-                idtf = ""
-                while letter.isdigit() or letter.isalpha() or letter == "_":
-                    idtf += letter
+            elif letter.isalpha() or letter == "_":
+                idtf = letter
+                while self.position < self.lenght and (
+                    self.source[self.position].isalnum()
+                    or self.source[self.position] == "_"
+                ):
+                    idtf += self.source[self.position]
                     self.position += 1
-                    if self.position == len(self.source):
-                        break
-                    letter = self.source[self.position]
                 self.next = Token("IDENTIFIER", idtf)
-                return self.next
 
-            if letter == "\n":
-                self.position += 1
+            elif letter == "\n":
                 self.next = Token("LN", "\n")
-                return self.next
 
-            raise SyntaxError(f"invalid syntax - {self.source[self.position]}")
+            else:
+                raise SyntaxError(f"invalid syntax - {self.source[self.position]}")
+            return
 
         self.next = Token("EOF", "")
-        return self.next

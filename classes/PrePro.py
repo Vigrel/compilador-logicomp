@@ -48,6 +48,11 @@ class Tokenizer:
                     if self.position == len(self.source):
                         break
                     letter = self.source[self.position]
+                    if letter.isalpha() or letter == "_":
+                        raise SyntaxError(
+                            f"invalid syntax - {num}{self.source[self.position]}"
+                        )
+
                 self.next = Token("INT", num)
                 return self.next
 

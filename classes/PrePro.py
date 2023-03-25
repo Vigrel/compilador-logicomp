@@ -14,10 +14,7 @@ OPS = {
 class PrePro:
     @staticmethod
     def filter(code: str) -> str:
-        try:
-            return re.match("(.*?)#", code).group()[:-1]
-        except:
-            return code
+        return re.sub(r"\s*#.*$", "", code, flags=re.MULTILINE)
 
 
 class Token:

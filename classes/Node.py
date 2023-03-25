@@ -75,12 +75,12 @@ class Assignment(Node):
         super().__init__(value, children)
 
     def evaluate(self):
-        SymbolTable.setter(self.children[0].value, self.children[1].evaluate())
+        SymbolTable.setter(self.value, self.children[0].evaluate())
 
 
 class Block(Node):
-    def __init__(self, value, children) -> None:
-        super().__init__(value, children)
+    def __init__(self, children) -> None:
+        super().__init__(0, children)
 
     def evaluate(self) -> None:
         for child in self.children:

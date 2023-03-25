@@ -3,10 +3,9 @@ class SymbolTable:
 
     @staticmethod
     def getter(identifier) -> int:
-        try:
+        if identifier in SymbolTable.symbols:
             return SymbolTable.symbols[identifier]
-        except:
-            raise KeyError(identifier)
+        raise NameError(f"name '{identifier}' is not defined")
 
     @staticmethod
     def setter(identifier, value) -> None:

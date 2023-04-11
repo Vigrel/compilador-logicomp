@@ -8,17 +8,26 @@
 
 BLOCK = { STATEMENT };
 
-STATEMENT = ( λ | ASSIGNMENT | PRINT), "\n" ;
+STATEMENT = ( 
+    λ | 
+    ASSIGNMENT | 
+    PRINT |
+    "while", REL_EXPRESSION, "\n", { STATEMENT }, "end" |
+    "if", REL_EXPRESSION, "\n", { STATEMENT }, (λ | ("else", "\n", { STATEMENT })), "end"
+    ),
+    "\n";
 
-ASSIGNMENT = IDENTIFIER, "=", EXPRESSION ;
+ASSIGNMENT = IDENTIFIER, "=", REL_EXPRESSION ;
 
-PRINT = "println", "(", EXPRESSION, ")" ;
+PRINT = "println", "(", REL_EXPRESSION, ")" ;
 
-EXPRESSION = TERM, { ("+" | "-"), TERM } ;
+REL_EXPRESSION = EXPRESSION, { ("==" | ">" | "<"), EXPRESSION } ;
 
-TERM = FACTOR, { ("*" | "/"), FACTOR } ;
+EXPRESSION = TERM, { ("+" | "-" | "||"), TERM } ;
 
-FACTOR = (("+" | "-"), FACTOR) | NUMBER | "(", EXPRESSION, ")" | IDENTIFIER ;
+TERM = FACTOR, { ("*" | "/" | "&&"), FACTOR } ;
+
+FACTOR = (("+" | "-" | "!"), FACTOR) | NUMBER | "(", REL_EXPRESSION, ")" | IDENTIFIER | "readln","(",")" ;
 
 IDENTIFIER = LETTER, { LETTER | DIGIT | "_" } ;
 

@@ -26,6 +26,16 @@ class BinOp(Node):
             return self.children[0].evaluate() * self.children[1].evaluate()
         if self.value == "/":
             return self.children[0].evaluate() // self.children[1].evaluate()
+        if self.value == "<":
+            return self.children[0].evaluate() < self.children[1].evaluate()
+        if self.value == ">":
+            return self.children[0].evaluate() > self.children[1].evaluate()
+        if self.value == "&&":
+            return self.children[0].evaluate() and self.children[1].evaluate()
+        if self.value == "||":
+            return self.children[0].evaluate() or self.children[1].evaluate()
+        if self.value == "==":
+            return self.children[0].evaluate() == self.children[1].evaluate()
 
 
 class UnOp(Node):
@@ -33,6 +43,8 @@ class UnOp(Node):
         super().__init__(value, children)
 
     def evaluate(self) -> any:
+        if self.value == "!":
+            return not self.children[0].evaluate()
         if self.value == "-":
             return -self.children[0].evaluate()
         return self.children[0].evaluate()
@@ -59,7 +71,7 @@ class Print(Node):
         super().__init__(value, children)
 
     def evaluate(self) -> None:
-        return print(self.children[0].evaluate())
+        print(self.children[0].evaluate())
 
 
 class Identifier(Node):
@@ -85,3 +97,31 @@ class Block(Node):
     def evaluate(self) -> None:
         for child in self.children:
             child.evaluate()
+
+
+class ReadLn(Node):
+    def __init__(self) -> None:
+        super().__init__(0, [])
+
+    def evaluate(self) -> int:
+        return int(input())
+
+
+class While(Node):
+    def __init__(self, children) -> None:
+        super().__init__(0, children)
+
+    def evaluate(self) -> None:
+        while self.children[0].evaluate():
+            self.children[1].evaluate()
+
+
+class If(Node):
+    def __init__(self, children) -> None:
+        super().__init__(0, children)
+
+    def evaluate(self) -> None:
+        if self.children[0].evaluate():
+            return self.children[1].evaluate()
+        if len(self.children) == 3:
+            return self.children[2].evaluate()

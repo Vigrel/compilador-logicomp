@@ -7,7 +7,9 @@ OPS = {
     "/": "DIV",
     "(": "PARENO",
     ")": "PARENC",
-    "=": "EQUALS",
+    "!": "NOT",
+    ">": "GT",
+    "<": "LT",
 }
 
 
@@ -28,12 +30,12 @@ class Tokenizer:
         self.source: str = PrePro.filter(source)
         self.position: int = 0
         self.next: Token = Token("", 0)
-        self.lenght = len(self.source)
+        self.length = len(self.source)
 
         self.selectNext()
 
     def selectNext(self):
-        while self.position < self.lenght:
+        while self.position < self.length:
             letter = self.source[self.position]
             self.position += 1
 
@@ -43,10 +45,36 @@ class Tokenizer:
             elif letter in OPS:
                 self.next = Token(OPS[letter], letter)
 
+            elif letter in ["|", "&", "="]:
+                symbol = letter
+                while self.position < self.length and self.source[self.position] in [
+                    "|",
+                    "&",
+                    "=",
+                    " ",
+                ]:
+                    if self.source[self.position] == symbol:
+                        if symbol == "&":
+                            self.next = Token("AND", f"&&")
+                        if symbol == "|":
+                            self.next = Token("OR", f"||")
+                        if symbol == "=":
+                            self.next = Token("EQUALSS", f"==")
+                        self.position += 1
+                        break
+                    self.position += 1
+                else:
+                    if symbol == "=":
+                        self.next = Token("EQUALS", f"=")
+                    else:
+                        raise SyntaxError(
+                            f"invalid syntax - {self.source[self.position - 1]}"
+                        )
+
             elif letter.isdecimal():
                 num = letter
                 while (
-                    self.position < self.lenght
+                    self.position < self.length
                     and self.source[self.position].isdecimal()
                 ):
                     num += self.source[self.position]
@@ -55,7 +83,7 @@ class Tokenizer:
 
             elif letter.isalpha() or letter == "_":
                 idtf = letter
-                while self.position < self.lenght and (
+                while self.position < self.length and (
                     self.source[self.position].isalnum()
                     or self.source[self.position] == "_"
                 ):

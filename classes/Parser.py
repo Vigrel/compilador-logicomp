@@ -29,6 +29,16 @@ class Parser:
                     Parser.tknz.selectNext()
                     continue
 
+                if idtf == "readline":
+                    Parser.tknz.selectNext()
+                    if Parser.tknz.next.type != "PARENO":
+                        raise SyntaxError("Missing (")
+                    Parser.tknz.selectNext()
+                    if Parser.tknz.next.type != "PARENC":
+                        raise SyntaxError("'(' was never closed")
+                    Parser.tknz.selectNext()
+                    return ReadLn()
+
                 if idtf == "while":
                     Parser.tknz.selectNext()
                     while_exp = Parser.parseRealExpression()
@@ -142,7 +152,7 @@ class Parser:
         if tkn.type == "INT":
             return IntVal(tkn.value)
 
-        if tkn.value == "readln":
+        if tkn.value == "readline":
             if Parser.tknz.next.type != "PARENO":
                 raise SyntaxError("Missing (")
             Parser.tknz.selectNext()
@@ -172,8 +182,4 @@ class Parser:
     @staticmethod
     def run(code: str) -> any:
         Parser.tknz.__init__(code)
-        # while Parser.tknz.next.type != "EOF":
-        #     print(Parser.tknz.next.value)
-        #     print(Parser.tknz.next.type)
-        #     Parser.tknz.selectNext()
         return Parser.parseBlock().evaluate()

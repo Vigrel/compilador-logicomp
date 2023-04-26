@@ -10,6 +10,7 @@ OPS = {
     "!": "NOT",
     ">": "GT",
     "<": "LT",
+    ".": "CONC",
 }
 
 
@@ -45,12 +46,13 @@ class Tokenizer:
             elif letter in OPS:
                 self.next = Token(OPS[letter], letter)
 
-            elif letter in ["|", "&", "="]:
+            elif letter in ["|", "&", "=", ":"]:
                 symbol = letter
                 while self.position < self.length and self.source[self.position] in [
                     "|",
                     "&",
                     "=",
+                    ":",
                     " ",
                 ]:
                     if self.source[self.position] == symbol:
@@ -58,6 +60,8 @@ class Tokenizer:
                             self.next = Token("AND", f"&&")
                         if symbol == "|":
                             self.next = Token("OR", f"||")
+                        if symbol == ":":
+                            self.next = Token("TYPE", f"::")
                         if symbol == "=":
                             self.next = Token("EQUALSS", f"==")
                         self.position += 1
@@ -70,6 +74,14 @@ class Tokenizer:
                         raise SyntaxError(
                             f"invalid syntax - {self.source[self.position - 1]}"
                         )
+
+            elif letter == '"':
+                string = ""
+                while self.source[self.position] != '"':
+                    string += self.source[self.position]
+                    self.position += 1
+                self.position += 1
+                self.next = Token("STR", string)
 
             elif letter.isdecimal():
                 num = letter

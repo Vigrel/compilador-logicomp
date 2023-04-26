@@ -23,7 +23,7 @@ class Parser:
                     if Parser.tknz.next.type != "PARENO":
                         raise SyntaxError("'(' needed")
                     Parser.tknz.selectNext()
-                    node = Print("print", [Parser.parseRealExpression()])
+                    node = Print([Parser.parseRealExpression()])
                     if Parser.tknz.next.type != "PARENC":
                         raise SyntaxError("'(' was never closed")
                     Parser.tknz.selectNext()
@@ -82,12 +82,26 @@ class Parser:
                     continue
 
                 Parser.tknz.selectNext()
-                if Parser.tknz.next.type != "EQUALS":
-                    raise SyntaxError("'=' needed")
-                Parser.tknz.selectNext()
+                if Parser.tknz.next.type == "TYPE":
+                    Parser.tknz.selectNext()
+                    typ = Parser.tknz.next.value
+                    Parser.tknz.selectNext()
+                    if Parser.tknz.next.type == "EQUALS":
+                        Parser.tknz.selectNext()
+                        print(Parser.tknz.next.value)
+                        print(Parser.tknz.next.type)
+                        node = VarDec(
+                            idtf, [Identifier(typ), Parser.parseRealExpression()]
+                        )
+                        continue
+                    node = VarDec(idtf, [Identifier(typ)])
+                    continue
 
-                node = Assignment(idtf, [Parser.parseRealExpression()])
-                continue
+                if Parser.tknz.next.type == "EQUALS":
+                    Parser.tknz.selectNext()
+                    node = Assignment(idtf, [Parser.parseRealExpression()])
+                    continue
+
             raise SyntaxError(f"ivalid syntax - {Parser.tknz.next.value}")
 
         Parser.tknz.selectNext()
@@ -112,7 +126,7 @@ class Parser:
     def parseExpression() -> Node:
         node = Parser.parseTerm()
 
-        while Parser.tknz.next.type in ["PLUS", "MINUS", "OR"]:
+        while Parser.tknz.next.type in ["PLUS", "MINUS", "OR", "CONC"]:
             op = Parser.tknz.next.value
             Parser.tknz.selectNext()
 
@@ -149,6 +163,9 @@ class Parser:
         tkn = Parser.tknz.next
         Parser.tknz.selectNext()
 
+        if tkn.type == "STR":
+            return StrVal(tkn.value)
+
         if tkn.type == "INT":
             return IntVal(tkn.value)
 
@@ -182,4 +199,10 @@ class Parser:
     @staticmethod
     def run(code: str) -> any:
         Parser.tknz.__init__(code)
+        # while Parser.tknz.next.type != "EOF":
+        #     print(Parser.tknz.next.value)
+        #     print(Parser.tknz.next.type)
+        #     Parser.tknz.selectNext()
+
+        print(SymbolTable.symbols)
         return Parser.parseBlock().evaluate()

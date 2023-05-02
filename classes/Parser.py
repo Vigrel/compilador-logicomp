@@ -48,6 +48,9 @@ class Parser:
                     children = []
                     while Parser.tknz.next.value != "end":
                         children.append(Parser.parseStatement())
+                        if Parser.tknz.next.type == "EOF":
+                            raise SyntaxError(f"end not used")
+
                     Parser.tknz.selectNext()
                     node = While([while_exp, Block(children)])
                     continue
@@ -64,6 +67,9 @@ class Parser:
                     children_if = []
                     while Parser.tknz.next.value not in ["else", "end"]:
                         children_if.append(Parser.parseStatement())
+                        if Parser.tknz.next.type == "EOF":
+                            raise SyntaxError(f"end not used")
+
                     childs.append(Block(children_if))
                     if Parser.tknz.next.value == "else":
                         Parser.tknz.selectNext()
@@ -74,6 +80,8 @@ class Parser:
                         children_else = []
                         while Parser.tknz.next.value != "end":
                             children_else.append(Parser.parseStatement())
+                            if Parser.tknz.next.type == "EOF":
+                                raise SyntaxError(f"end not used")
                         Parser.tknz.selectNext()
                         childs.append(Block(children_else))
 

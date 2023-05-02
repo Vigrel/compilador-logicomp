@@ -32,18 +32,19 @@ class BinOp(Node):
                 return (rig[0], rig[1] // lef[1])
 
         if rig[0] == lef[0]:
-            if self.value in ["+", "."]:
-                return (rig[0], rig[1] + lef[1])
             if self.value == "<":
-                return (rig[0], rig[1] < lef[1])
+                return (int, int(rig[1] < lef[1]))
             if self.value == ">":
-                return (rig[0], rig[1] > lef[1])
+                return (int, int(rig[1] > lef[1]))
+            if self.value == "==":
+                return (int, int(rig[1] == lef[1]))
             if self.value == "&&":
                 return (rig[0], rig[1] and lef[1])
             if self.value == "||":
                 return (rig[0], rig[1] or lef[1])
-            if self.value == "==":
-                return (rig[0], rig[1] == lef[1])
+
+        if self.value == ".":
+            return (str, str(rig[1]) + str(lef[1]))
 
         raise TypeError(f"unsupported operand type(s) for +: '{rig[0]}' and '{lef[0]}'")
 

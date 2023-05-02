@@ -23,15 +23,13 @@ class BinOp(Node):
 
         if rig[0] == lef[0] and rig[0] == int:
             if self.value == "+":
-                return (rig[0], rig[1] + lef[1])
+                return (int, rig[1] + lef[1])
             if self.value == "-":
-                return (rig[0], rig[1] - lef[1])
+                return (int, rig[1] - lef[1])
             if self.value == "*":
-                return (rig[0], rig[1] * lef[1])
+                return (int, rig[1] * lef[1])
             if self.value == "/":
-                return (rig[0], rig[1] // lef[1])
-
-        if rig[0] == lef[0]:
+                return (int, rig[1] // lef[1])
             if self.value == "<":
                 return (int, int(rig[1] < lef[1]))
             if self.value == ">":
@@ -39,14 +37,27 @@ class BinOp(Node):
             if self.value == "==":
                 return (int, int(rig[1] == lef[1]))
             if self.value == "&&":
-                return (rig[0], rig[1] and lef[1])
+                return (int, int(rig[1] and lef[1]))
             if self.value == "||":
-                return (rig[0], rig[1] or lef[1])
+                return (int, int(rig[1] or lef[1]))
 
-        if self.value == ".":
-            return (str, str(rig[1]) + str(lef[1]))
+        if rig[0] == str or lef[0] == str:
+            if self.value == ".":
+                return (str, str(rig[1]) + str(lef[1]))
+            if self.value == "<":
+                return (int, int(str(rig[1]) < str(lef[1])))
+            if self.value == ">":
+                return (int, int(str(rig[1]) > str(lef[1])))
+            if self.value == "==":
+                return (int, int(str(rig[1]) == str(lef[1])))
+            if self.value == "&&":
+                return (str, str(rig[1]) and str(lef[1]))
+            if self.value == "||":
+                return (str, str(rig[1]) or str(lef[1]))
 
-        raise TypeError(f"unsupported operand type(s) for +: '{rig[0]}' and '{lef[0]}'")
+        raise TypeError(
+            f"unsupported operand type(s) for {self.value}: '{rig[0]}' and '{lef[0]}'"
+        )
 
 
 class UnOp(Node):

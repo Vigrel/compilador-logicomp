@@ -125,7 +125,7 @@ class While(Node):
         super().__init__(0, children)
 
     def evaluate(self) -> None:
-        while self.children[0].evaluate():
+        while self.children[0].evaluate()[1]:
             self.children[1].evaluate()
 
 
@@ -134,7 +134,7 @@ class If(Node):
         super().__init__(0, children)
 
     def evaluate(self) -> None:
-        if self.children[0].evaluate():
+        if self.children[0].evaluate()[1]:
             return self.children[1].evaluate()
         if len(self.children) == 3:
             return self.children[2].evaluate()

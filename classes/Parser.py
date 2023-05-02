@@ -77,7 +77,6 @@ class Parser:
                         Parser.tknz.selectNext()
                         childs.append(Block(children_else))
 
-                    Parser.tknz.selectNext()
                     node = If(childs)
                     continue
 
@@ -88,8 +87,6 @@ class Parser:
                     Parser.tknz.selectNext()
                     if Parser.tknz.next.type == "EQUALS":
                         Parser.tknz.selectNext()
-                        print(Parser.tknz.next.value)
-                        print(Parser.tknz.next.type)
                         node = VarDec(
                             idtf, [Identifier(typ), Parser.parseRealExpression()]
                         )
@@ -199,10 +196,4 @@ class Parser:
     @staticmethod
     def run(code: str) -> any:
         Parser.tknz.__init__(code)
-        # while Parser.tknz.next.type != "EOF":
-        #     print(Parser.tknz.next.value)
-        #     print(Parser.tknz.next.type)
-        #     Parser.tknz.selectNext()
-
-        print(SymbolTable.symbols)
         return Parser.parseBlock().evaluate()

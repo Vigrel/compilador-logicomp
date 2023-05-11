@@ -1,12 +1,16 @@
 from abc import ABC, abstractmethod
 from typing import List
+import uuid
+
 from classes.SymbolTable import SymbolTable
+from classes.WriteNASM import WriteNASM
 
 
 class Node(ABC):
     def __init__(self, value, children) -> None:
         self.value: any = value
         self.children: List[Node] = children
+        self.id = int(uuid.uuid1())
 
     @abstractmethod
     def evaluate(self) -> any:
@@ -18,41 +22,39 @@ class BinOp(Node):
         super().__init__(value, children)
 
     def evaluate(self):
-        rig = self.children[0].evaluate()
-        lef = self.children[1].evaluate()
+        lef = self.children[0].evaluate()
+        WriteNASM.write("\nPUSH EBX")
+        rig = self.children[1].evaluate()
 
-        if rig[0] == lef[0] and rig[0] == int:
-            if self.value == "+":
-                return (int, rig[1] + lef[1])
-            if self.value == "-":
-                return (int, rig[1] - lef[1])
-            if self.value == "*":
-                return (int, rig[1] * lef[1])
-            if self.value == "/":
-                return (int, rig[1] // lef[1])
-            if self.value == "<":
-                return (int, int(rig[1] < lef[1]))
-            if self.value == ">":
-                return (int, int(rig[1] > lef[1]))
-            if self.value == "==":
-                return (int, int(rig[1] == lef[1]))
-            if self.value == "&&":
-                return (int, int(rig[1] and lef[1]))
-            if self.value == "||":
-                return (int, int(rig[1] or lef[1]))
-
-        if self.value == ".":
-            return (str, str(rig[1]) + str(lef[1]))
+        WriteNASM.write("\nPOP EAX")
+        if self.value == "+":
+            WriteNASM.write("\nADD EAX, EBX")
+            WriteNASM.write("\nMOV EBX, EAX")
+            return lef + rig
+        if self.value == "-":
+            WriteNASM.write("\nSUB EAX, EBX")
+            WriteNASM.write("\nMOV EBX, EAX")
+            return lef - rig
+        if self.value == "*":
+            WriteNASM.write("\nIMUL EBX")
+            WriteNASM.write("\nMOV EBX, EAX")
+            return lef * rig
+        if self.value == "/":
+            WriteNASM.write("\nDIV EAX, EBX")
+            WriteNASM.write("\nMOV EBX, EAX")
+            return lef // rig
         if self.value == "<":
-            return (int, int(str(rig[1]) < str(lef[1])))
+            WriteNASM.write("\nCMP EAX, EBX")
+            WriteNASM.write("\nCALL binop_jl")
+            return int(lef < rig)
         if self.value == ">":
-            return (int, int(str(rig[1]) > str(lef[1])))
+            WriteNASM.write("\nCMP EAX, EBX")
+            WriteNASM.write("\nCALL binop_jg")
+            return int(lef > rig)
         if self.value == "==":
-            return (int, int(str(rig[1]) == str(lef[1])))
-        if self.value == "&&":
-            return (str, str(rig[1]) and str(lef[1]))
-        if self.value == "||":
-            return (str, str(rig[1]) or str(lef[1]))
+            WriteNASM.write("\nCMP EAX, EBX")
+            WriteNASM.write("\nCALL binop_je")
+            return int(lef == rig)
 
         raise TypeError(
             f"unsupported operand type(s) for {self.value}: '{rig[0]}' and '{lef[0]}'"
@@ -77,7 +79,8 @@ class IntVal(Node):
         super().__init__(int(value), [])
 
     def evaluate(self) -> int:
-        return (int, self.value)
+        WriteNASM.write(f"\nMOV EBX, {self.value}")
+        return self.value
 
 
 class NoOp(Node):
@@ -93,7 +96,10 @@ class Print(Node):
         super().__init__(0, children)
 
     def evaluate(self) -> None:
-        print(self.children[0].evaluate()[1])
+        print(self.children[0].evaluate())
+        WriteNASM.write("\nPUSH EBX")
+        WriteNASM.write("\nCALL print")
+        WriteNASM.write("\nPOP EBX")
 
 
 class Identifier(Node):
@@ -101,9 +107,8 @@ class Identifier(Node):
         super().__init__(value, [])
 
     def evaluate(self) -> int:
-        if self.value in SymbolTable.reserved:
-            return self.value
-        return SymbolTable.getter(self.value)
+        WriteNASM.write(f"\nMOV EBX, [EBP-{SymbolTable.getter(self.value)[0]}]")
+        return SymbolTable.getter(self.value)[1]
 
 
 class Assignment(Node):
@@ -112,6 +117,7 @@ class Assignment(Node):
 
     def evaluate(self):
         SymbolTable.setter(self.value, self.children[0].evaluate())
+        WriteNASM.write(f"\nMOV [EBP-{SymbolTable.getter(self.value)[0]}], EBX")
 
 
 class Block(Node):
@@ -123,21 +129,18 @@ class Block(Node):
             child.evaluate()
 
 
-class ReadLn(Node):
-    def __init__(self) -> None:
-        super().__init__(0, [])
-
-    def evaluate(self) -> int:
-        return (int, int(input()))
-
-
 class While(Node):
     def __init__(self, children) -> None:
         super().__init__(0, children)
 
     def evaluate(self) -> None:
-        while self.children[0].evaluate()[1]:
-            self.children[1].evaluate()
+        WriteNASM.write(f"\nLOOP_{self.id}:")
+        self.children[0].evaluate()
+        WriteNASM.write(f"\nCMP EBX, False")
+        WriteNASM.write(f"\nJE EXIT_{self.id}")
+        self.children[1].evaluate()
+        WriteNASM.write(f"\nJMP LOOP_{self.id}")
+        WriteNASM.write(f"\nEXIT_{self.id}:")
 
 
 class If(Node):
@@ -145,10 +148,11 @@ class If(Node):
         super().__init__(0, children)
 
     def evaluate(self) -> None:
-        if self.children[0].evaluate()[1]:
-            return self.children[1].evaluate()
-        if len(self.children) == 3:
-            return self.children[2].evaluate()
+        WriteNASM.write(f"\nCMP EBX, False")
+        WriteNASM.write(f"\nJE IF_{self.id}")
+        self.children[2].evaluate()
+        WriteNASM.write(f"\nIF_{self.id}:")
+        self.children[1].evaluate()
 
 
 class VarDec(Node):
@@ -156,14 +160,7 @@ class VarDec(Node):
         super().__init__(value, children)
 
     def evaluate(self):
-        SymbolTable.create(self.value, self.children[0].evaluate())
+        WriteNASM.write("\nPUSH DWORD 0")
+        SymbolTable.create(self.value)
         if len(self.children) == 2:
             SymbolTable.setter(self.value, self.children[1].evaluate())
-
-
-class StrVal(Node):
-    def __init__(self, value: str) -> None:
-        super().__init__(str(value), [])
-
-    def evaluate(self) -> str:
-        return (str, self.value)

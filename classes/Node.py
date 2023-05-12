@@ -67,11 +67,9 @@ class UnOp(Node):
 
     def evaluate(self):
         eva = self.children[0].evaluate()
-        if self.value == "!":
-            return (eva[0], not eva[1])
         if self.value == "-":
-            return (eva[0], -eva[1])
-        return (eva[0], eva[1])
+            return -eva
+        return eva
 
 
 class IntVal(Node):
@@ -150,7 +148,8 @@ class If(Node):
     def evaluate(self) -> None:
         WriteNASM.write(f"\nCMP EBX, False")
         WriteNASM.write(f"\nJE IF_{self.id}")
-        self.children[2].evaluate()
+        if len(self.children) == 3:
+            self.children[2].evaluate()
         WriteNASM.write(f"\nIF_{self.id}:")
         self.children[1].evaluate()
 
@@ -164,3 +163,19 @@ class VarDec(Node):
         SymbolTable.create(self.value)
         if len(self.children) == 2:
             SymbolTable.setter(self.value, self.children[1].evaluate())
+
+
+class ReadLn(Node):
+    def __init__(self) -> None:
+        super().__init__(0, [])
+
+    def evaluate(self) -> int:
+        return int(input())
+
+
+class StrVal(Node):
+    def __init__(self, value: str) -> None:
+        super().__init__(str(value), [])
+
+    def evaluate(self) -> str:
+        return (str, self.value)

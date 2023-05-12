@@ -107,8 +107,6 @@ class Parser:
                     node = Assignment(idtf, [Parser.parseRealExpression()])
                     continue
 
-            raise SyntaxError(f"ivalid syntax - {Parser.tknz.next.value}")
-
         Parser.tknz.selectNext()
         return node
 

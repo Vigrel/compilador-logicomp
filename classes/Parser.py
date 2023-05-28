@@ -107,6 +107,8 @@ class Parser:
                         Parser.tknz.selectNext()
                         if Parser.tknz.next.type == "EOF":
                             raise SyntaxError(f"'(' was never closed")
+                        if Parser.tknz.next.type == "PARENC":
+                            break
                         if Parser.tknz.next.type != "IDENTIFIER":
                             raise SyntaxError(f"ivalid syntax")
                         variable = Parser.tknz.next.value
@@ -138,6 +140,7 @@ class Parser:
                         func_block.append(Parser.parseStatement())
                         if Parser.tknz.next.type == "EOF":
                             raise SyntaxError(f"end not used")
+                    Parser.tknz.selectNext()
                     node = FuncDec(typ, [idtf.value, var_dec, Block(func_block)])
                     continue
 
@@ -161,7 +164,7 @@ class Parser:
                     node = Assignment(idtf, [Parser.parseRealExpression()])
                     continue
 
-            # raise SyntaxError(f"ivalid syntax - {Parser.tknz.next.value}")
+            raise SyntaxError(f"ivalid syntax - {Parser.tknz.next.value}")
         Parser.tknz.selectNext()
         return node
 
@@ -241,6 +244,8 @@ class Parser:
                 func_agrs = []
                 while True:
                     Parser.tknz.selectNext()
+                    if Parser.tknz.next.type == "PARENC":
+                        break
                     func_agrs.append(Parser.parseRealExpression())
                     if Parser.tknz.next.type == "COMMA":
                         continue

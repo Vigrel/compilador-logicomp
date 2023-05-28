@@ -4,6 +4,7 @@ from classes.PrePro import Tokenizer
 
 class Parser:
     tknz = Tokenizer("")
+    symbol_table = SymbolTable()
 
     @staticmethod
     def parseBlock() -> Node:
@@ -27,6 +28,11 @@ class Parser:
                     if Parser.tknz.next.type != "PARENC":
                         raise SyntaxError("'(' was never closed")
                     Parser.tknz.selectNext()
+                    continue
+
+                if idtf == "return":
+                    Parser.tknz.selectNext()
+                    node = Return([Parser.parseRealExpression()])
                     continue
 
                 if idtf == "readline":
@@ -88,7 +94,55 @@ class Parser:
                     node = If(childs)
                     continue
 
+                if idtf == "function":
+                    Parser.tknz.selectNext()
+                    idtf = Parser.tknz.next
+                    if idtf.type != "IDENTIFIER":
+                        raise SyntaxError(f"ivalid syntax - function {idtf.value}")
+                    Parser.tknz.selectNext()
+                    if Parser.tknz.next.type != "PARENO":
+                        SyntaxError("'(' needed")
+                    var_dec = []
+                    while True:
+                        Parser.tknz.selectNext()
+                        if Parser.tknz.next.type == "EOF":
+                            raise SyntaxError(f"'(' was never closed")
+                        if Parser.tknz.next.type != "IDENTIFIER":
+                            raise SyntaxError(f"ivalid syntax")
+                        variable = Parser.tknz.next.value
+                        Parser.tknz.selectNext()
+                        if Parser.tknz.next.type != "TYPE":
+                            raise SyntaxError(f"ivalid syntax")
+                        Parser.tknz.selectNext()
+                        if Parser.tknz.next.value not in ["String", "Int"]:
+                            raise TypeError(f"ivalid type {Parser.tknz.next.value}")
+                        var_dec.append([variable, Parser.tknz.next.value])
+                        Parser.tknz.selectNext()
+                        if Parser.tknz.next.type == "COMMA":
+                            continue
+                        break
+                    if Parser.tknz.next.type != "PARENC":
+                        raise SyntaxError("'(' was never closed")
+                    Parser.tknz.selectNext()
+                    if Parser.tknz.next.type != "TYPE":
+                        raise SyntaxError(f"ivalid syntax")
+                    Parser.tknz.selectNext()
+                    typ = Parser.tknz.next.value
+                    if typ not in ["String", "Int"]:
+                        raise TypeError(f"ivalid type {typ}")
+                    Parser.tknz.selectNext()
+                    if Parser.tknz.next.type != "LN":
+                        raise SyntaxError(f"ivalid syntax")
+                    func_block = []
+                    while Parser.tknz.next.value != "end":
+                        func_block.append(Parser.parseStatement())
+                        if Parser.tknz.next.type == "EOF":
+                            raise SyntaxError(f"end not used")
+                    node = FuncDec(typ, [idtf.value, var_dec, Block(func_block)])
+                    continue
+
                 Parser.tknz.selectNext()
+
                 if Parser.tknz.next.type == "TYPE":
                     Parser.tknz.selectNext()
                     typ = Parser.tknz.next.value
@@ -107,8 +161,7 @@ class Parser:
                     node = Assignment(idtf, [Parser.parseRealExpression()])
                     continue
 
-            raise SyntaxError(f"ivalid syntax - {Parser.tknz.next.value}")
-
+            # raise SyntaxError(f"ivalid syntax - {Parser.tknz.next.value}")
         Parser.tknz.selectNext()
         return node
 
@@ -184,6 +237,19 @@ class Parser:
             return ReadLn()
 
         if tkn.type == "IDENTIFIER":
+            if Parser.tknz.next.type == "PARENO":
+                func_agrs = []
+                while True:
+                    Parser.tknz.selectNext()
+                    func_agrs.append(Parser.parseRealExpression())
+                    if Parser.tknz.next.type == "COMMA":
+                        continue
+                    break
+                if Parser.tknz.next.type == "PARENC":
+                    Parser.tknz.selectNext()
+                    return FuncCall(tkn.value, func_agrs)
+                raise SyntaxError
+
             return Identifier(tkn.value)
 
         if tkn.type in ["PLUS", "MINUS", "NOT"]:
@@ -204,4 +270,4 @@ class Parser:
     @staticmethod
     def run(code: str) -> any:
         Parser.tknz.__init__(code)
-        return Parser.parseBlock().evaluate()
+        return Parser.parseBlock().evaluate(Parser.symbol_table)

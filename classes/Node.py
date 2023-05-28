@@ -184,6 +184,8 @@ class FuncCall(Node):
             func_st.setter(arg[0], value.evaluate(symbol_table))
 
         result = function[1].children[2].evaluate(func_st)
+        if result == None:
+            result = (int, 1)
         if function[0] != result[0]:
             raise SyntaxError
 

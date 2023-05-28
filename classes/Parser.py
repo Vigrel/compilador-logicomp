@@ -199,6 +199,9 @@ class Parser:
                 [node, Parser.parseTerm()],
             )
 
+        if Parser.tknz.next.type == "IDENTIFIER":
+            raise SyntaxError(f"ivalid syntax - {Parser.tknz.next.value}")
+
         return node
 
     @staticmethod
